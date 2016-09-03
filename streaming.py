@@ -40,7 +40,7 @@ def listen(conn):
 
     while streaming_data:
         for data in streaming_data:
-            # conn.sendall(json.dumps(data, default=date_handler))
+            conn.sendall(json.dumps(data, default=date_handler))
             sleep(1)
         streaming_data = get_data(db, data['id'])
 
@@ -49,7 +49,6 @@ while True:
     conn, addr = s.accept()
     print 'Connected by', addr
 
-    server_thread = Thread(target=listen, args=[conn])
-    server_thread.start()
+    listen(conn)
 
     conn.close()
