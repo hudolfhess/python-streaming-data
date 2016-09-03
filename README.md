@@ -15,8 +15,6 @@ create database streaming_test;
 
 use streaming_test;
 
-drop table products;
-
 create table customers (
 	`id` INT(11) AUTO_INCREMENT PRIMARY KEY,
 	`name` VARCHAR(55) not null,
