@@ -44,11 +44,12 @@ def listen(conn):
             sleep(1)
         streaming_data = get_data(db, data['id'])
 
+    conn.close()
+
 
 while True:
     conn, addr = s.accept()
     print 'Connected by', addr
 
-    listen(conn)
-
-    conn.close()
+    listen_thread = Thread(target=listen, args=(conn,))
+    listen_thread.start()
