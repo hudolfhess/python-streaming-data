@@ -9,8 +9,8 @@ namespace ConsumingApiMPWithSocket
 {
     class MainClass
     {
-        //static string host = "172.16.50.144";
         static string host = "172.16.50.144";
+        //static string host = "172.16.50.36";
         static int port = 8080;
 
         private static Socket ConnectSocket()
@@ -50,13 +50,13 @@ namespace ConsumingApiMPWithSocket
 
         public static void Main(string[] args)
         {
-            var models = new List<string> { "produtos", "clientes" };
+            var models = new List<string> { "customers", "products" };
             foreach (var model in models)
             {
                 Task.Run(() =>
                 {
-                    string result = ReceiveModel(model);
-                    Console.WriteLine(result);
+                    var content = ReceiveModel(model);
+                    Console.WriteLine("{0}: {1}\r\n", model, content);
                 });
             }
         }
