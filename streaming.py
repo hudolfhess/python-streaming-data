@@ -1,5 +1,5 @@
 import json
-import socket
+from socket import *
 import MySQLdb
 from time import sleep
 from threading import Thread
@@ -7,9 +7,13 @@ from threading import Thread
 
 HOST = ''
 PORT = 8080
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s = socket(AF_INET, SOCK_STREAM)
+s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 s.bind((HOST, PORT))
 s.listen(5)
+
+
+available_models = ['products', 'customers']
 
 
 def dictfetchall(cursor):
@@ -20,35 +24,42 @@ def dictfetchall(cursor):
     ]
 
 
-def get_data(db, last_id=0):
+def get_data(db, model_to_sync, last_id=0):
     c = db.cursor()
-    c.execute("""select * from vendas_empresa where id > %s order by id asc limit 50""" % last_id)
+    c.execute("""select * from {0} where id > {1} order by id asc limit 5""".format(model_to_sync, last_id))
     return dictfetchall(c)
 
 
 def date_handler(obj):
-    return obj.isoformat() if hasattr(obj, 'isoformat') else obj
+    return obj.isoformat() if hasattr(obj, 'isoformat') else str(obj)
 
 
 def get_database_connection():
-    return MySQLdb.connect(host='localhost', user='root', db='representante')
+    return MySQLdb.connect(host='localhost', user='root', db='streaming_test')
 
 
-def listen(conn):
+def listen(conn, model_to_sync):
     db = get_database_connection()
-    streaming_data = get_data(db)
+    streaming_data = get_data(db, model_to_sync)
 
     while streaming_data:
         for data in streaming_data:
             conn.sendall(json.dumps(data, default=date_handler))
             sleep(1)
-        streaming_data = get_data(db, data['id'])
+        streaming_data = get_data(db, model_to_sync, data['id'])
+
+    conn.close()
 
 
 while True:
     conn, addr = s.accept()
     print 'Connected by', addr
 
-    listen(conn)
+    model_to_sync = conn.recv(1024)
 
-    conn.close()
+    if model_to_sync in available_models:
+        listen_thread = Thread(target=listen, args=(conn, model_to_sync))
+        listen_thread.start()
+    else:
+        conn.send('Available models: products, customers')
+        conn.close()
